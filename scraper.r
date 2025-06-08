@@ -8,8 +8,12 @@ library(tidyverse)
 
 ##### Funktionen fürs Scraping #####
 #### Generieren der Übersichstseiten-Links, auf denen die Abgeordneten aufgelistet werden. ####
-parlamente <- c("https://www.abgeordnetenwatch.de/bundestag/bundestag-wahl-2025"#,
-                #"https://www.abgeordnetenwatch.de/saarland/16"
+parlamente <- c("https://www.abgeordnetenwatch.de/bundestag/20",
+                #"https://www.abgeordnetenwatch.de/bundestag",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2013",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2017",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2021",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2025"
                 )
 
 fragenscrapen <- TRUE
@@ -73,8 +77,8 @@ for (i in 1:length(parlamente)) {
   #### Schleife zum Extrahieren von Profil-Links aus den Übersichtsseiten ####
   #leeres Df für Fälle erstellen
   df <- data.frame()
-  #length(paths)
-  for(j in 1:2){
+
+  for(j in 1:length(paths)){
     html <- read_html(paths[j])
     
     #Extrahieren der Abgeordneten Profil-Link-Endung
@@ -306,11 +310,11 @@ for (i in 1:length(parlamente)) {
         },
         error = function(e){
           Sys.sleep(10)
-          if (attempt == maxretry-1) {message(cat("Can´t reach: ", qpages[j]),"\n reason: ", e)}
+          if (attempt == maxretry-1) {message(cat("\n Can´t reach: ", qpages[j]),"\n reason: ", e)}
         },
         #Aus der Trycatch schleife herausspringen
         if (attempt == maxretry) {
-          message(cat("Cant reach: ",  link, "\n"))
+          message(cat("\n Cant reach: ",  link, "\n"))
           break}
         )
       }
@@ -342,11 +346,11 @@ for (i in 1:length(parlamente)) {
         #Delay, damit die Verbindung beim nächsten mal hoffentlich besser ist
         error = function(e){
           Sys.sleep(10)
-          if (attempt == maxretry-1) {message(cat("Can´t reach: ", qpages[j]),"\n reason: ", e)}
+          if (attempt == maxretry-1) {message(cat("\n Can´t reach: ", qpages[j]),"\n reason: ", e)}
         },
         #Aus der Trycatch schleife herausspringen
         if (attempt == maxretry) {
-          message(cat("Couldn´t reach: ",  qpages[j]))
+          message(cat("\n Couldn´t reach: ",  qpages[j]))
           break}
         )
       }  
@@ -443,11 +447,11 @@ for (i in 1:length(parlamente)) {
             #Was soll passieren, wenn ein Error auftritt? 10sek warten.
             error = function(e){
               Sys.sleep(10)
-              if (attempt2 == maxretry-1) {message(cat("Can´t reach: ", qlinks[k]),"\n reason: ", e)}
+              if (attempt2 == maxretry-1) {message(cat("\n Can´t reach: ", qlinks[k]),"\n reason: ", e)}
             },
             #Aus der Trycatch schleife herausspringen
             if (attempt2 == maxretry) {
-              message(cat("Couldn´t reach: ",  qlinks[k]))
+              message(cat("\n Couldn´t reach: ",  qlinks[k]))
               break})
           
         }
@@ -468,3 +472,6 @@ for (i in 1:length(parlamente)) {
     df_all <- rbind(df_all, df)
     }
 }
+
+
+saveRDS(df_all, file = paste0("parl", df_parl$parlID, ".rds"))
