@@ -8,8 +8,18 @@ library(tidyverse)
 
 ##### Funktionen fürs Scraping #####
 #### Generieren der Übersichstseiten-Links, auf denen die Abgeordneten aufgelistet werden. ####
-parlamente <- c("https://www.abgeordnetenwatch.de/bundestag/bundestag-wahl-2025"#,
-                #"https://www.abgeordnetenwatch.de/saarland/16"
+parlamente <- c("https://www.abgeordnetenwatch.de/bundestag/wahl-2005",
+                "https://www.abgeordnetenwatch.de/bundestag/16",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2009",
+                "https://www.abgeordnetenwatch.de/bundestag/17",
+                "https://www.abgeordnetenwatch.de/bundestag/18",
+                "https://www.abgeordnetenwatch.de/bundestag/19",
+                "https://www.abgeordnetenwatch.de/bundestag/20",
+                "https://www.abgeordnetenwatch.de/bundestag",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2013",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2017",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2021",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2025"
                 )
 
 fragenscrapen <- TRUE
@@ -73,8 +83,8 @@ for (i in 1:length(parlamente)) {
   #### Schleife zum Extrahieren von Profil-Links aus den Übersichtsseiten ####
   #leeres Df für Fälle erstellen
   df <- data.frame()
-  #length(paths)
-  for(j in 1:2){
+
+  for(j in 1:length(paths)){
     html <- read_html(paths[j])
     
     #Extrahieren der Abgeordneten Profil-Link-Endung
@@ -468,3 +478,6 @@ for (i in 1:length(parlamente)) {
     df_all <- rbind(df_all, df)
     }
 }
+
+
+saveRDS(df_all, file = "BT.rds")
