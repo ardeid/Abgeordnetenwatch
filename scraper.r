@@ -8,8 +8,19 @@ library(tidyverse)
 
 ##### Funktionen fürs Scraping #####
 #### Generieren der Übersichstseiten-Links, auf denen die Abgeordneten aufgelistet werden. ####
+<<<<<<< HEAD
 parlamente <- c("https://www.abgeordnetenwatch.de/bundestag/20",
                 #"https://www.abgeordnetenwatch.de/bundestag",
+=======
+parlamente <- c("https://www.abgeordnetenwatch.de/bundestag/wahl-2005",
+                "https://www.abgeordnetenwatch.de/bundestag/16",
+                "https://www.abgeordnetenwatch.de/bundestag/wahl-2009",
+                "https://www.abgeordnetenwatch.de/bundestag/17",
+                "https://www.abgeordnetenwatch.de/bundestag/18",
+                "https://www.abgeordnetenwatch.de/bundestag/19",
+                "https://www.abgeordnetenwatch.de/bundestag/20",
+                "https://www.abgeordnetenwatch.de/bundestag",
+>>>>>>> c7b80bab32592b5f506f6784898b18c81191f4db
                 "https://www.abgeordnetenwatch.de/bundestag/wahl-2013",
                 "https://www.abgeordnetenwatch.de/bundestag/wahl-2017",
                 "https://www.abgeordnetenwatch.de/bundestag/wahl-2021",
