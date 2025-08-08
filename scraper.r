@@ -485,5 +485,10 @@ for (i in 1:length(parlamente)) {
 }
 
 
-saveRDS(df_all, file = paste0("parl", df_parl$parlID, ".rds"))
+saveRDS(df_all, file = paste0("parl", str_flatten(df_parl$parlID, collapse = "_"), ".rds"))
+<<<<<<< HEAD
 
+=======
+>>>>>>> 36cb471f0ee97f64c1d29116091405057c512cc6
+
+### Es gibt ein Problem in den Profilen!
