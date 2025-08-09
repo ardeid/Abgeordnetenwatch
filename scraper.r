@@ -261,7 +261,7 @@ for(j in 1:length(paths)){
     #Failsave
     aussch <- ifelse(str_length(aussch) > 0, aussch, NA)
     #Konstruieren eines Falls
-    case <- c(profile_links[k], parlID, parlbez, id, name, sex, geb, frak, fraklink, aemter, qittr, qittr_years, gewonnenüber, wkreis, wkreisP, wliste, listpos, aussch, edu, flink, Sys.time())
+    case <- c(profile_links[k], parlID, parlbez, id, name, sex, geb, frak[1], fraklink, aemter, qittr, qittr_years, gewonnenüber, wkreis, wkreisP, wliste, listpos, aussch, edu, flink, Sys.time())
     #Einfügen des Falls ins DF
     df <- rbind(df, case)
       
@@ -278,7 +278,11 @@ rm(parlID, parlbez, id, name, sex, geb, frak, fraklink, aemter, qittr, qittr_yea
 ### 
 names(df) <- c("proflink", "parlID", "parlbez", "AbgeordnetenID", "name", "sex", "geb", "frak", "fraklink", "aemter", "teilamtszeit", "teileamtszeit", 
                "wkreisOwliste", "wkreis", "wkreisP", "wliste", "listpos", "ausschüsse", "bildung", "fragenlink", "systime")
-  
+
+### In Tühringen Wahl 2014 ist eine Frau doppelt. Deshalb dieser Filter.
+df <- df %>% filter(!duplicated(AbgeordnetenID))
+
+
 ##### Fragen Scrapen
 if (fragenscrapen) {
   
@@ -345,7 +349,7 @@ if (fragenscrapen) {
         html <- read_html(qpages[j])
         
           #Fragelinks Scrapen. Ist Zeitaufwendiger aber weniger Fehleranfällig
-          qlinks <- html_elements(html, xpath = "//article/div/div/div/div/div/a") %>% html_attr("href") %>% str_c("https://www.abgeordnetenwatch.de", ., sep = "")
+          qlinks <- html_elements(html, xpath = "//div[@class='share-buttons__input']/span") %>% html_text()
           
           #Wenn ein Profil keine 
           if (length(qlinks) < 1) {break}
@@ -472,8 +476,8 @@ if (fragenscrapen) {
   }
     
   #Memory Mangement  
-  rm(case, qlinks, id, reag, qpers, qdate, qhead, qtext, adate, multia, atext, tags, qpages, 
-     k, j, link, html, num, mod_ann_text, mod_ann, multi_mod_ann, attempt, attempt2)
+  #rm(case, qlinks, id, reag, qpers, qdate, qhead, qtext, adate, multia, atext, tags, qpages, 
+  #   k, j, link, html, num, mod_ann_text, mod_ann, multi_mod_ann, attempt, attempt2)
   
   ### Variablen namen geben
   names(df_q) <- c("URL", "AbgeordnetenID", "reagiert", "person", "fragedate", "frageteaser", "fragetext", "antworttime", "mehrereantworten", "antworttext", "tags", "anmerkung", "anmerkung_text", "mehrereanmerkungen", "Uhrzeit")
@@ -484,7 +488,11 @@ if (fragenscrapen) {
 }
 if (save) {
   ### DF Abspeichern
-  saveRDS(df, file = paste0("parl_", unique(df$parlbez), ".rds"))
+  saveRDS(df, 
+          file = paste0("parl_", 
+                        str_remove(parlamente, pattern = "https://www.abgeordnetenwatch.de/") %>% str_replace("/", "#"), 
+                        ".rds")
+          )
 } 
 if (return) {
   return(df)
