@@ -20,6 +20,9 @@ if (length(parlbez) == 0) {
   html_parlbez <- read_html(str_c("https://www.abgeordnetenwatch.de", html_parlbez))
   parlbez <- html_elements(html_parlbez, xpath = "//div[@class='page-title l-container']/h1") %>% html_text() %>% str_extract("^.+(?= \\()")
 }
+
+cat("\nNow Scraping: ", parlbez, "\n\n")
+
 ##### Übersichtsseiten scrapen ######
 #Links zu den Abgeordneten Übersichtsseiten zusammenfügen
 #Wahlperioden haben eine andere URL
@@ -272,7 +275,7 @@ for(j in 1:length(paths)){
 }
   
 #Memory Management
-rm(parlID, parlbez, id, name, sex, geb, frak, fraklink, aemter, qittr, qittr_years, gewonnenüber, wkreis, wkreisP, wliste, listpos, aussch, edu, flink, aus_link,
+rm(parlID, id, name, sex, geb, frak, fraklink, aemter, qittr, qittr_years, gewonnenüber, wkreis, wkreisP, wliste, listpos, aussch, edu, flink, aus_link,
    parlamente_abg, profil, case)
   
 ### 
@@ -474,17 +477,23 @@ if (fragenscrapen) {
       }
     }
   }
-    
   #Memory Mangement  
-  #rm(case, qlinks, id, reag, qpers, qdate, qhead, qtext, adate, multia, atext, tags, qpages, 
-  #   k, j, link, html, num, mod_ann_text, mod_ann, multi_mod_ann, attempt, attempt2)
+  rm(case, qlinks, id, reag, qpers, qdate, qhead, qtext, adate, multia, atext, tags, qpages, 
+     k, j, link, html, num, mod_ann_text, mod_ann, multi_mod_ann, attempt, attempt2)
+  
+  
+  ### Test, ob df_q leer ist, also ob keine einzige Frage gestellt wurde
+  if (nrow(df_q) == 0) {
+    message("\n", parlbez, "   Hat keine Fragen!\n")
+  }else{
+
   
   ### Variablen namen geben
   names(df_q) <- c("URL", "AbgeordnetenID", "reagiert", "person", "fragedate", "frageteaser", "fragetext", "antworttime", "mehrereantworten", "antworttext", "tags", "anmerkung", "anmerkung_text", "mehrereanmerkungen", "Uhrzeit")
   
   
   df <- full_join(df, df_q, by = "AbgeordnetenID", suffix = c(".x", ".y"))
-  
+  }
 }
 if (save) {
   ### DF Abspeichern
