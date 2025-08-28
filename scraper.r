@@ -7,7 +7,7 @@ library(tidyverse)
 
 aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FALSE, return = TRUE){
 
-### Parlament URL einlesen  
+### read Parlament URL  
 html <- read_html(parlamente)
 
 ### Namen des Parlaments / des Wahlkampfs scrapen
@@ -46,7 +46,7 @@ paths <- append(paths, str_c(parlamente_abg, "?page=", 0:as.numeric(num[2]), sep
 rm(num)
 
 ### Übersichtsseiten Gefunden Printout
-writeLines(paste("\n", parlbez, "Übersichtsseiten gefunden:", length(paths)))
+writeLines(paste("\n", parlbez, "Found overview pages:", length(paths)))
   
   
 
@@ -269,7 +269,7 @@ for(j in 1:length(paths)){
     df <- rbind(df, case)
       
     #Progress Bar
-    cat("\rÜbersichtsseiten: ") 
+    cat("\rOverview Pages: ") 
     cat("(",j,"/", length(paths),") Profil: (",k, "/", length(profile_links), ")   ", sep = " ")
   }
 }
@@ -321,7 +321,7 @@ if (fragenscrapen) {
            qpages <- append(qpages, link)
         }
         #Progress Bar
-        cat("\r Scraping Question Pages: ") 
+        cat("\r Searching for Question Pages: ") 
         cat(df$name[j] ," (",j,"/", nrow(df),")",str_dup(" ", times = 30), sep = "")
         break
         },
@@ -484,7 +484,7 @@ if (fragenscrapen) {
   
   ### Test, ob df_q leer ist, also ob keine einzige Frage gestellt wurde
   if (nrow(df_q) == 0) {
-    message("\n", parlbez, "   Hat keine Fragen!\n")
+    message("\n", parlbez, "   Has no Questions!\n")
   }else{
 
   
