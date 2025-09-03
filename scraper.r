@@ -35,8 +35,37 @@ parlamente_abg <- if(str_detect(parlbez, pattern = " Wahl ")){
 ### leeren Vector initiieren
 paths <- vector()
 
+tryCatch({
+  html <- read_html(parlamente_abg)
+  error <- FALSE
+  },
+  error = function(x) {
+    message(paste0(parlbez, ": has no Abgeordnete or Kandidierende Page"))
+    
+    ### Code to generate an empty dataset
+    df <- data.frame()
+    case <- rep(NA, 36)
+    df <- rbind(df, case)
+    names(df) <- c("proflink", "parlID", "parlbez", "AbgeordnetenID", "name", "sex", "geb", "frak", "fraklink", "aemter", "teilamtszeit", "teileamtszeit", 
+                     "wkreisOwliste", "wkreis", "wkreisP", "wliste", "listpos", "ausschüsse", "bildung", "fragenlink", "systime",
+                   "URL", "AbgeordnetenID", "reagiert", "person", "fragedate", "frageteaser", "fragetext", "antworttime", "mehrereantworten", "antworttext", "tags", "anmerkung", "anmerkung_text", "mehrereanmerkungen", "Uhrzeit")
+    
+    if (save) {
+      ### DF Abspeichern
+      saveRDS(df, 
+              file = paste0("parl_", 
+                            str_remove(parlamente, pattern = "https://www.abgeordnetenwatch.de/") %>% str_replace("/", "#"), 
+                            ".rds")
+      )
+    } 
+    error <<- TRUE
+    
+  }
+)
+if(error == TRUE){return()}
 ### Übersichtsseiten links scapen
-html <- read_html(parlamente_abg)
+
+
 ### Auslesen der letzten Profil Übersichtsseite eines Parlaments
 num <- html_elements(html, xpath = "//ul/li[@class='pager__item pager__item--last']/a[@class='pager__link']") %>% html_attr("href") %>% str_split("=") %>% unlist()
 ### Konstruieren der Übersichtsseiten Links
@@ -507,5 +536,11 @@ if (return) {
   return(df)
 }
 }
+
+
+###To do:
+#Check if thüringen/5 works now
+#solve the Quest problems with BT 2009-2013, BT W 2025
+#solve the profile problems with BT W 2021, Sachen-Anhalt W 2011
 
 
