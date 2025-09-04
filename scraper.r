@@ -537,10 +537,3 @@ if (return) {
 }
 }
 
-
-###To do:
-#Check if thüringen/5 works now
-#solve the Quest problems with BT 2009-2013, BT W 2025
-#solve the profile problems with BT W 2021, Sachen-Anhalt W 2011
-
-
