@@ -27,10 +27,10 @@ if (any(str_detect(files, "parl_"))) {
   parlamente <- parlamente[!str_detect(parlamente, str_flatten(done, collapse = "|"))]
 }
 
-
+if(length(parlamente > 0)){
 ### Using map and sample to scrape the wanted amount of parlaments at once.
 map(sample(parlamente, 1), aw_scraper, save = TRUE, return = FALSE, fragenscrapen = TRUE)
-
+}
 
 
 ### Testing the datasets
@@ -48,10 +48,10 @@ for (i in 1:length(files)) {
   #getting the parlarment name
   parlname <- unique(df$parlbez) 
   #Testing for errors scraping the questions
-  quest_error <- any(!str_detect(df$Uhrzeit, "\\d{10}\\.\\d?"), na.rm = TRUE)
+  quest_error <- any(!str_detect(df$Uhrzeit, "\\d{10}\\.?\\d?"), na.rm = TRUE)
   
   #Testing for errors scraping the profiles
-  prof_error <- any(!str_detect(df$systime, "\\d{10}\\.\\d?"), na.rm = TRUE) 
+  prof_error <- any(!str_detect(df$systime, "\\d{10}\\.?\\d?"), na.rm = TRUE) 
   
   filename <- files[i]
   
@@ -82,24 +82,32 @@ for (i in 1:length(files)) {
 }
 #Memory Management 
 rm(files)
-
+if (any(results$quest_error | results$prof_error)) {
 error_dfs <- rbind(results[results$quest_error,], results[results$prof_error,])
-### i = No. df that you want to investigate
-i <- 1
+
 ### Reading in the Error Datasets
-error_df <- readRDS(paste0(getwd(), "/",error_dfs[i]))
 errors <- data.frame()
 for (i in 1:nrow(error_dfs)) {
+  #reading in one error df
+  error_df <- readRDS(paste0(getwd(), "/", error_dfs$filename[i]))
   
+  #checking for question error in error_dfs
   if (error_dfs[i,]$quest_error) {
-    error <- error_df %>% filter(!str_detect(error_df$Uhrzeit, "\\d{10}\\.\\d?"), na.rm = TRUE)
+    errors <- rbind(errors, 
+                    filter(error_df, 
+                           !str_detect(error_df$Uhrzeit, "\\d{10}\\.?\\d?"), 
+                           na.rm = TRUE))
   }
+  #checking for profile error in error_dfs
   if(error_dfs[i,]$prof_error){
-    error <- error_df %>% filter(!str_detect(error_df$Uhrzeit, "\\d{10}\\.\\d?"), na.rm = TRUE)
+    errors <- rbind(errors, 
+                    filter(error_df, 
+                           !str_detect(error_df$systime, "\\d{10}\\.?\\d?"), 
+                           na.rm = TRUE))
   }
 }
 view(errors)
-
+}else{message("\nNo catastrophic errors in the scraped dataframes!\n")}
 
 
 
