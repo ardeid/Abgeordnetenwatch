@@ -2,6 +2,7 @@
 .Rhistory
 .DS_store
 .rds
+.RData
 
 # Notebook and image files
 *.html
