@@ -1,4 +1,11 @@
 .Rproj.user
 .Rhistory
-.RData
-.Ruserdata
+.DS_store
+.rds
+
+# Notebook and image files
+*.html
+*.pdf
+/*.png
+
+# solutions/

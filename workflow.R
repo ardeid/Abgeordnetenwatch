@@ -28,8 +28,8 @@ if (any(str_detect(files, "parl_"))) {
 }
 
 
-# Verwende furrr::future_map, um die aw_scraper Funktion parallel auf die URLs anzuwenden
-map(sample(parlamente, 5), aw_scraper, save = TRUE, return = FALSE, fragenscrapen = TRUE)
+### Using map and sample to scrape the wanted amount of parlaments at once.
+map(sample(parlamente, 1), aw_scraper, save = TRUE, return = FALSE, fragenscrapen = TRUE)
 
 
 
@@ -83,10 +83,23 @@ for (i in 1:length(files)) {
 #Memory Management 
 rm(files)
 
-name <- as.character(seq(1:4))
-error_dfs <- c(results$filename[results$quest_error], results$filename[results$prof_error])
+error_dfs <- rbind(results[results$quest_error,], results[results$prof_error,])
+### i = No. df that you want to investigate
+i <- 1
 ### Reading in the Error Datasets
-for (i in 1:length(error_dfs)) {
-  readRDS(paste0(getwd(), "/",error_dfs[i]))
+error_df <- readRDS(paste0(getwd(), "/",error_dfs[i]))
+errors <- data.frame()
+for (i in 1:nrow(error_dfs)) {
+  
+  if (error_dfs[i,]$quest_error) {
+    error <- error_df %>% filter(!str_detect(error_df$Uhrzeit, "\\d{10}\\.\\d?"), na.rm = TRUE)
+  }
+  if(error_dfs[i,]$prof_error){
+    error <- error_df %>% filter(!str_detect(error_df$Uhrzeit, "\\d{10}\\.\\d?"), na.rm = TRUE)
+  }
 }
+view(errors)
+
+
+
 
