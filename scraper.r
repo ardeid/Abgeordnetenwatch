@@ -1,6 +1,6 @@
 # Loading Packages
-if (!require(tidyselect)) install.packages("tidyselect")
-library(tidyselect)
+if (!require(tidyverse)) install.packages("tidyselect")
+library(tidyverse)
 if (!require(rvest)) install.packages("rvest")
 library(rvest)
 
@@ -24,13 +24,22 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
       html_text() %>%
       str_extract("^.+(?= \\()")
   }
-
+  
+  ### Koaltion
+  koal <- html_elements(html, xpath = "//div[@class='parliament-info p-b-large']//a[@class='link-committees']") %>% 
+    html_text() %>%
+    str_flatten(collapse = "%>%")
+  # savety für EU Parlament und andere
+  if (str_length(koal) == 0) {
+    koal <- NA
+  }
+  
   cat("\nNow Scraping: ", parlbez, "\n\n")
 
   ##### Übersichtsseiten scrapen ######
   # Links zu den Abgeordneten Übersichtsseiten zusammenfügen
   # Wahlperioden haben eine andere URL
-  parlamente_abg <- if (str_detect(parlbez, pattern = " Wahl ")) {
+  parlamente_abg <- if (str_detect(parlbez, pattern = "Wahl")) {
     str_c(parlamente, "/kandidierende")
   } else {
     str_c(parlamente, "/abgeordnete")
@@ -52,7 +61,7 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
       case <- rep(NA, 36)
       df <- rbind(df, case)
       names(df) <- c(
-        "proflink", "parlID", "parlbez", "AbgeordnetenID", "name", "sex", "geb", "frak", "fraklink", "aemter", "teilamtszeit", "teileamtszeit",
+        "proflink", "parlID", "parlbez", "AbgeordnetenID", "name", "sex", "geb", "frak", "regkoal", "fraklink", "aemter", "teilamtszeit", "teileamtszeit",
         "wkreisOwliste", "wkreis", "wkreisP", "wliste", "listpos", "ausschüsse", "bildung", "fragenlink", "systime",
         "URL", "AbgeordnetenID", "reagiert", "person", "fragedate", "frageteaser", "fragetext", "antworttime", "mehrereantworten", "antworttext", "tags", "anmerkung", "anmerkung_text", "mehrereanmerkungen", "Uhrzeit"
       )
@@ -209,7 +218,7 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
       wkreisP <- html_elements(html, xpath = str_c(
         "//div/h3[@class='accordion__title']/div[@class='accordion__title__text' and contains(text(),'",
         parlbez,
-        "')]/../..//div[@class='visually-hidden js-tooltip-text']",
+        "')]/../../div[@class='accordion__content is-initial-collapsed']",
         # xpath für die spezifische Information im Info Tooltip
         "//div[@class='field field--inline field--decimal field--constituency-result']"
       )) %>%
@@ -267,7 +276,7 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
         "')]/div[@class='accordion__subline']"
       )) |>
         html_text() %>%
-        str_extract("\\d... - ....")
+        str_extract("\\d... - ....+")
 
       if (length(qittr_years) < 1) {
         qittr_years <- NA
@@ -287,9 +296,10 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
 
       ### Parlamentarische Ämter des Abgeordneten
       aemter <- html_elements(html, xpath = "//div/h3[@class='accordion__title']/div[@class='accordion__title__text' and starts-with(text(), ' Abg')]") %>%
-        html_text() %>%
-        str_flatten(collapse = "#") %>%
-        str_remove_all("Abgeordnet\\S*")
+        html_text2() %>%
+        str_remove_all("Abgeordnet\\S*") %>%
+        str_trim() %>%
+        str_flatten(collapse = "%>%") 
 
       if (length(aemter) < 2) {
         aemter <- NA
@@ -338,7 +348,7 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
       # Failsave
       aussch <- ifelse(str_length(aussch) > 0, aussch, NA)
       # Konstruieren eines Falls
-      case <- c(profile_links[k], parlID, parlbez, id, name, sex, geb, frak[1], fraklink, aemter, qittr, qittr_years, gewonnenüber, wkreis, wkreisP, wliste, listpos, aussch, edu, flink, Sys.time())
+      case <- c(profile_links[k], parlID, parlbez, id, name, sex, geb, frak[1], koal, fraklink, aemter, qittr, qittr_years, gewonnenüber, wkreis, wkreisP, wliste, listpos, aussch, edu, flink, Sys.time())
       # Einfügen des Falls ins DF
       df <- rbind(df, case)
 
@@ -351,12 +361,12 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
   # Memory Management
   rm(
     parlID, id, name, sex, geb, frak, fraklink, aemter, qittr, qittr_years, gewonnenüber, wkreis, wkreisP, wliste, listpos, aussch, edu, flink, aus_link,
-    parlamente_abg, profil, case
+    parlamente_abg, profil, case, koal
   )
 
   ###
   names(df) <- c(
-    "proflink", "parlID", "parlbez", "AbgeordnetenID", "name", "sex", "geb", "frak", "fraklink", "aemter", "teilamtszeit", "teileamtszeit",
+    "proflink", "parlID", "parlbez", "AbgeordnetenID", "name", "sex", "geb", "frak", "regkoal", "fraklink", "aemter", "teilamtszeit", "teileamtszeit",
     "wkreisOwliste", "wkreis", "wkreisP", "wliste", "listpos", "ausschüsse", "bildung", "fragenlink", "systime"
   )
 
@@ -476,7 +486,7 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
             {
               html <- read_html(qlinks[k])
               # Reagiert (Beantwortet ist Reagiert - Fragen die mit Standardantworten Beantwortet wurden)
-              reag <- html_elements(html, xpath = "//div[@class='l-grid__col l-grid__col--2/3@lg']/article//span[@class='tile__politician__label']/strong[text()='Antwort']/..") %>%
+              reag <- html_elements(html, xpath = "//div[@class='l-col-span-2@lg']/article/div[@class='question__answer']//div[@class='answer__header-text']/strong") %>%
                 html_text() %>%
                 str_detect("ausstehend", negate = TRUE)
               # Umgehen mit Sonderfällen
@@ -488,14 +498,14 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
               # Test ob mehrere Antworten auf eine Frage gegeben wurden
               multia <- ifelse(length(reag) > 1, TRUE, FALSE)
               # Fragende Person; Aus der Fragenüberschrift auf der Frageseite
-              qpers <- html_elements(html, xpath = "//div[@class='tile__politician__info']/span[@class='tile__politician__label']/span/..") %>%
+              qpers <- html_elements(html, xpath = "//div[@class='l-col-span-2@lg']/article//div[@class='question__question-meta']/div") %>%
                 html_text() %>%
                 str_extract("(?<=von).+") %>%
                 str_extract(".+(?=•)") %>%
                 str_trim()
 
               ### Fragetext
-              qtext <- html_elements(html, xpath = "//div[@class='tile__question-text']/div[@class='field field--text_long field--text']") %>%
+              qtext <- html_elements(html, xpath = "//div[@class='question__question']/div[@class='body']") %>%
                 html_text2()
               # Manchmal gibt es keinen Fragetext in der Textbox sondern die ganze Frage steht in der Überschrift
               if (length(qtext) < 1) {
@@ -503,15 +513,15 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
               }
 
               ### Frageheader
-              qhead <- html_elements(html, xpath = "//h1[@class='tile__question__teaser']") %>% html_text2()
+              qhead <- html_elements(html, xpath = "//div[@class='question__question']/h1[@class='h4']") %>% html_text2()
 
               ### Fragedatum
-              qdate <- html_elements(html, xpath = "//div[@class='tile__politician__info']/span[@class='tile__politician__label']/span") %>% html_text()
+              qdate <- html_elements(html, xpath = "//div[@class='question__question-meta']/div/span[@itemprop='datePublished']") %>% html_text()
 
 
               ### Antworttext; if-else um mit nicht beantworteten Fragen umgehen zu können.
               if (isTRUE(reag[1])) {
-                atext <- html_elements(html, xpath = "//div[@class='question-answer__text']") %>%
+                atext <- html_elements(html, xpath = "//div[@class='l-col-span-2@lg']/article/div[@class='question__answer']//div[@class='answer__body']") %>%
                   html_text2()
               } else {
                 atext <- NA
@@ -524,7 +534,7 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
 
               ### Antwortdatum; if-else um mit nicht beantworteten Fragen umgehen zu können.
               if (isTRUE(reag[1])) {
-                adate <- html_elements(html, xpath = "//div[@class='tile__politician__info']/span[@class='tile__politician__suffix']/span[not(@class='tile__politician__party')]") %>%
+                adate <- html_elements(html, xpath = "//div[@class='l-col-span-2@lg']/article/div[@class='question__answer']//div[@class='answer__header']//span[@itemprop='datePublished']") %>%
                   html_attr("content")
               } else {
                 adate <- NA
@@ -535,16 +545,16 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
               }
 
               # Fragen Tags (Thematische Einordnung)
-              tags <- html_elements(html, xpath = "//div[@class='question-body']//div[@class='tile__question-meta']/ul[@class='list-inline']/li/a") %>%
-                html_text() %>%
+              tags <- html_elements(html, xpath = "//div[@class='l-col-span-2@lg']/article/div[@class='question__answer']/div[@class='question__tags']//a") %>%
+                html_text() %>% 
+                str_trim() %>%
                 str_flatten(collapse = " %>% ")
 
 
               ### Text der Anmerkung, zur Prüfung, ob wirklich alle Anmerkungen wegen Vorgefertigten Antworten gemacht wurden.
-              mod_ann_text <- html_elements(html, xpath = "//div[@data-component-id='aw:mod_annotation']//div[@class='tile__question-text']") %>% html_text2()
+              mod_ann_text <- html_elements(html, xpath = "//div[@data-component-id='aw:mod_annotation']") %>% html_text2()
 
               # Mit Leeren Anmerkungen umgehen
-              mod_ann_text <- mod_ann_text[!str_length(mod_ann_text) == 0]
               if (length(mod_ann_text) > 1) {
                 # zusammenfügen von mehreren Antworten zu einem String
                 mod_ann_text <- mod_ann_text %>% str_flatten(collapse = " %>% ")
@@ -590,10 +600,10 @@ aw_scraper <- function(parlamente, fragenscrapen = TRUE, maxretry = 5, save = FA
       }
     }
     # Memory Mangement
-    rm(
-      case, qlinks, id, reag, qpers, qdate, qhead, qtext, adate, multia, atext, tags, qpages,
-      k, j, link, html, num, mod_ann_text, mod_ann, multi_mod_ann, attempt, attempt2
-    )
+    #rm(
+    #  case, qlinks, id, reag, qpers, qdate, qhead, qtext, adate, multia, atext, tags, qpages,
+    #  k, j, link, html, num, mod_ann_text, mod_ann, multi_mod_ann, attempt, attempt2
+    #)
 
 
     ### Test, ob df_q leer ist, also ob keine einzige Frage gestellt wurde
